@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Myself_Tools · 我的工具集</title>
+<meta name="description" content="个人使用的工具和源文件，纯浏览器本地运行。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Cpath d='M10 16.5l4 4 8-9' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#f4f5f7;
+    --card:#ffffff;
+    --text:#191c20;
+    --text-2:#6b7280;
+    --text-3:#9aa1ab;
+    --line:#e7e9ec;
+    --line-2:#d9dce1;
+    --accent:#4f46e5;
+    --accent-soft:#eef0fe;
+    --chip:#f2f3f5;
+    --shadow:0 6px 18px rgba(15,23,42,.07);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#14161a;
+      --card:#1c1f24;
+      --text:#eceef1;
+      --text-2:#9aa1ab;
+      --text-3:#6b7280;
+      --line:#2a2e34;
+      --line-2:#3a3f47;
+      --accent:#8b87f8;
+      --accent-soft:#25243c;
+      --chip:#25292f;
+      --shadow:0 6px 18px rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.6;
+  }
+  .wrap{max-width:880px;margin:0 auto;padding:48px 20px 64px;}
+
+  header{margin-bottom:26px;}
+  .brand{display:flex;align-items:center;gap:14px;}
+  .logo{
+    width:44px;height:44px;border-radius:12px;background:var(--accent);
+    display:flex;align-items:center;justify-content:center;flex:none;
+  }
+  .logo svg{width:24px;height:24px;}
+  h1{font-size:22px;font-weight:600;margin:0;letter-spacing:-.2px;}
+  .sub{margin:2px 0 0;font-size:13px;color:var(--text-2);}
+
+  .search{position:relative;margin-top:22px;}
+  .search svg{
+    position:absolute;left:14px;top:50%;transform:translateY(-50%);
+    width:16px;height:16px;color:var(--text-3);pointer-events:none;
+  }
+  .search input{
+    width:100%;height:44px;padding:0 14px 0 40px;
+    font-size:14px;font-family:inherit;color:var(--text);
+    background:var(--card);border:1px solid var(--line);border-radius:12px;
+    outline:none;transition:border-color .15s,box-shadow .15s;
+  }
+  .search input::placeholder{color:var(--text-3);}
+  .search input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+
+  .meta{
+    display:flex;align-items:center;justify-content:space-between;
+    margin:22px 2px 12px;font-size:12px;color:var(--text-3);
+  }
+  .meta a{color:var(--text-2);text-decoration:none;border-bottom:1px solid transparent;}
+  .meta a:hover{color:var(--accent);border-bottom-color:var(--accent);}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;}
+
+  .card{
+    position:relative;display:flex;gap:14px;align-items:flex-start;
+    padding:16px 18px;background:var(--card);border:1px solid var(--line);
+    border-radius:14px;text-decoration:none;color:inherit;
+    transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease;
+  }
+  .card:hover{transform:translateY(-2px);border-color:var(--line-2);box-shadow:var(--shadow);}
+  .card:active{transform:translateY(0);}
+
+  .icon{
+    width:40px;height:40px;flex:none;border-radius:11px;
+    background:var(--accent-soft);color:var(--accent);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .icon svg{width:20px;height:20px;}
+
+  .body{min-width:0;flex:1;}
+  .body h2{
+    font-size:14px;font-weight:600;margin:1px 0 3px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .body p{margin:0;font-size:12.5px;line-height:1.5;color:var(--text-2);}
+  .chip{
+    display:inline-block;margin-top:9px;padding:1px 8px;
+    font-size:11px;color:var(--text-2);background:var(--chip);border-radius:6px;
+  }
+  .arrow{
+    position:absolute;right:14px;top:16px;width:14px;height:14px;
+    color:var(--text-3);opacity:0;transform:translateX(-3px);
+    transition:opacity .15s,transform .15s;
+  }
+  .card:hover .arrow{opacity:1;transform:translateX(0);}
+
+  .card.add{
+    width:100%;font-family:inherit;text-align:left;cursor:pointer;
+    background:transparent;border:1px dashed var(--line-2);box-shadow:none;
+  }
+  .card.add .icon{background:transparent;border:1px dashed var(--line-2);color:var(--text-3);}
+  .card.add .body h2{color:var(--text-2);font-weight:500;}
+  .card.add:hover{border-color:var(--accent);}
+  .card.add:hover .icon{color:var(--accent);border-color:var(--accent);}
+
+  .empty{margin:28px 0;font-size:13px;color:var(--text-3);text-align:center;}
+
+  details.howto{
+    margin-top:26px;padding:0 18px;background:var(--card);
+    border:1px solid var(--line);border-radius:14px;
+  }
+  details.howto[open]{padding-bottom:18px;}
+  summary{
+    padding:14px 0;font-size:13px;font-weight:500;cursor:pointer;
+    list-style:none;display:flex;align-items:center;gap:8px;color:var(--text-2);
+  }
+  summary::-webkit-details-marker{display:none;}
+  summary::before{
+    content:"";width:6px;height:6px;border-right:1.5px solid currentColor;
+    border-bottom:1.5px solid currentColor;transform:rotate(-45deg);
+    transition:transform .15s;margin-left:2px;flex:none;
+  }
+  details.howto[open] summary::before{transform:rotate(45deg);}
+  details.howto ol{margin:2px 0 12px;padding-left:20px;font-size:13px;color:var(--text-2);}
+  details.howto li{margin-bottom:6px;}
+  details.howto pre{
+    margin:0;padding:12px 14px;overflow-x:auto;
+    background:var(--chip);border-radius:10px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:12px;line-height:1.7;color:var(--text);
+  }
+  details.howto .note{margin:12px 0 0;font-size:12px;color:var(--text-3);}
+
+  footer{
+    margin-top:34px;padding-top:18px;border-top:1px solid var(--line);
+    font-size:12px;color:var(--text-3);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  }
+  @media (max-width:520px){
+    .wrap{padding:32px 16px 48px;}
+    .grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Myself_Tools</h1>
+        <p class="sub">个人使用的工具和源文件 · 全部在浏览器本地运行</p>
+      </div>
+    </div>
+
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
+      </svg>
+      <input id="q" type="search" placeholder="搜索工具…（按 / 快速定位）" autocomplete="off" spellcheck="false">
+    </div>
+  </header>
+
+  <div class="meta">
+    <span id="count"></span>
+    <a href="https://github.com/xiangzuojia/Myself_Tools" target="_blank" rel="noopener">GitHub 仓库 →</a>
+  </div>
+
+  <main id="grid" class="grid"></main>
+  <p id="empty" class="empty" hidden>没有匹配的工具，换个关键词试试。</p>
+
+  <details class="howto" id="howto">
+    <summary>如何添加新工具</summary>
+    <ol>
+      <li>单文件工具：直接把 <code>.html</code> 传到仓库根目录。</li>
+      <li>带 js / css / 图片的工具：新建一个文件夹，主文件命名为 <code>index.html</code>。</li>
+      <li>打开本文件，在底部 <code>TOOLS</code> 清单里照格式加一行。</li>
+      <li>提交后等 Actions 跑完（约 40 秒），浏览器按 Ctrl+F5 强刷。</li>
+    </ol>
+    <pre>{ title: "图片压缩", desc: "纯浏览器内压缩，不上传服务器", href: "tools/compress/", tag: "小工具", icon: "image" },</pre>
+    <p class="note">href 用相对路径，不要以 <code>/</code> 开头。icon 可选：file / tool / image / text / chart / link，其它值会自动用默认图标。</p>
+  </details>
+
+  <footer>
+    <span>纯静态页面 · 无后端 · 数据只存在你的浏览器里</span>
+    <span>xiangzuojia</span>
+  </footer>
+</div>
+
+<script>
+/* ============================================================
+   工具清单：以后加工具只改这里，加一行就行
+   { title 名称, desc 说明, href 相对路径, tag 分类, icon 图标 }
+   ============================================================ */
+const TOOLS = [
+  {
+    title: "SP Case 生成器",
+    desc: "按 SP 模板批量生成 case 同名文件，整体替换 search / inc / param / temp / tran 段落。",
+    href: "sp_case_maker.html",
+    tag: "脚本工具",
+    icon: "file"
+  }
+];
+
+const ICONS = {
+  file:  '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/>',
+  tool:  '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+  image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-6 6"/>',
+  text:  '<path d="M5 6h14M5 11h14M5 16h9"/>',
+  chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  link:  '<path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/>',
+  plus:  '<path d="M12 5v14M5 12h14"/>'
+};
+
+const esc = s => String(s == null ? "" : s)
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+  .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+
+const svgWrap = paths =>
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + paths + '</svg>';
+
+const grid = document.getElementById("grid");
+const emptyTip = document.getElementById("empty");
+const countEl = document.getElementById("count");
+const input = document.getElementById("q");
+
+function cardHTML(t){
+  return '<a class="card" href="' + esc(t.href) + '">'
+    + '<div class="icon" aria-hidden="true">' + svgWrap(ICONS[t.icon] || ICONS.file) + '</div>'
+    + '<div class="body">'
+    +   '<h2>' + esc(t.title) + '</h2>'
+    +   '<p>' + esc(t.desc) + '</p>'
+    +   (t.tag ? '<span class="chip">' + esc(t.tag) + '</span>' : '')
+    + '</div>'
+    + '<span class="arrow" aria-hidden="true">' + svgWrap('<path d="M7 17L17 7"/><path d="M9 7h8v8"/>') + '</span>'
+    + '</a>';
+}
+
+const addHTML = '<button class="card add" type="button" id="addBtn">'
+  + '<div class="icon" aria-hidden="true">' + svgWrap(ICONS.plus) + '</div>'
+  + '<div class="body"><h2>添加新工具</h2><p>看三行说明就知道怎么加</p></div>'
+  + '</button>';
+
+function render(keyword){
+  const kw = (keyword || "").trim().toLowerCase();
+  const list = TOOLS.filter(t =>
+    !kw || (t.title + " " + t.desc + " " + (t.tag || "")).toLowerCase().includes(kw)
+  );
+
+  grid.innerHTML = list.map(cardHTML).join("") + (kw ? "" : addHTML);
+  emptyTip.hidden = list.length > 0;
+  countEl.textContent = kw
+    ? "找到 " + list.length + " / " + TOOLS.length + " 个工具"
+    : "共 " + TOOLS.length + " 个工具";
+
+  const btn = document.getElementById("addBtn");
+  if (btn) btn.addEventListener("click", () => {
+    const d = document.getElementById("howto");
+    d.open = true;
+    d.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+}
+
+render("");
+
+input.addEventListener("input", e => render(e.target.value));
+input.addEventListener("keydown", e => {
+  if (e.key === "Escape"){ input.value = ""; render(""); input.blur(); }
+});
+
+document.addEventListener("keydown", e => {
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+  if (e.key === "/" && !typing){ e.preventDefault(); input.focus(); }
+});
+</script>
+</body>
+</html>
