@@ -194,13 +194,13 @@
   <details class="howto" id="howto">
     <summary>如何添加新工具</summary>
     <ol>
-      <li>单文件工具：直接把 <code>.html</code> 传到仓库根目录。</li>
-      <li>带 js / css / 图片的工具：新建一个文件夹，主文件命名为 <code>index.html</code>。</li>
-      <li>打开本文件，在底部 <code>TOOLS</code> 清单里照格式加一行。</li>
+      <li>所有工具都放进仓库的 <code>tools/</code> 文件夹（<code>index.html</code> 自己留在根目录）。</li>
+      <li>单文件工具直接传成 <code>tools/xxx.html</code>；带 js / css / 图片的，在 <code>tools/</code> 里再建子文件夹，主文件命名为 <code>index.html</code>。</li>
+      <li>打开本文件，在底部 <code>TOOLS</code> 清单里加一行，<code>href</code> 写相对 <code>tools/</code> 的路径。</li>
       <li>提交后等 Actions 跑完（约 40 秒），浏览器按 Ctrl+F5 强刷。</li>
     </ol>
-    <pre>{ title: "图片压缩", desc: "纯浏览器内压缩，不上传服务器", href: "tools/compress/", tag: "小工具", icon: "image" },</pre>
-    <p class="note">href 用相对路径，不要以 <code>/</code> 开头。icon 可选：file / tool / image / text / chart / link，其它值会自动用默认图标。</p>
+    <pre>{ title: "图片压缩", desc: "纯浏览器内压缩，不上传服务器", href: "compress/", tag: "小工具", icon: "image" },</pre>
+    <p class="note">上面这行对应 <code>tools/compress/index.html</code>，网址是 <code>…/Myself_Tools/tools/compress/</code>。目录只在脚本顶部 <code>TOOLS_BASE</code> 定义一次，整体搬家改那一行就行。icon 可选：file / tool / image / text / chart / link。</p>
   </details>
 
   <footer>
@@ -211,8 +211,17 @@
 
 <script>
 /* ============================================================
+   工具统一放在仓库的这个文件夹里（相对仓库根目录）
+   以后想整体换目录，只改这一行，下面的清单不用动
+   ============================================================ */
+const TOOLS_BASE = "tools/";
+
+/* ============================================================
    工具清单：以后加工具只改这里，加一行就行
-   { title 名称, desc 说明, href 相对路径, tag 分类, icon 图标 }
+   href 写相对 tools/ 的路径：
+     单文件      → "sp_case_maker.html"   实际位置 tools/sp_case_maker.html
+     带资源的目录 → "compress/"            实际位置 tools/compress/index.html
+   外链或绝对路径（以 http 或 / 开头）会原样使用，不拼前缀
    ============================================================ */
 const TOOLS = [
   {
@@ -241,13 +250,19 @@ const esc = s => String(s == null ? "" : s)
 const svgWrap = paths =>
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + paths + '</svg>';
 
+function resolveHref(h){
+  if (!h) return "#";
+  if (/^(https?:)?\/\//i.test(h) || h.charAt(0) === "/") return h;
+  return TOOLS_BASE + h.replace(/^\.?\//, "");
+}
+
 const grid = document.getElementById("grid");
 const emptyTip = document.getElementById("empty");
 const countEl = document.getElementById("count");
 const input = document.getElementById("q");
 
 function cardHTML(t){
-  return '<a class="card" href="' + esc(t.href) + '">'
+  return '<a class="card" href="' + esc(resolveHref(t.href)) + '">'
     + '<div class="icon" aria-hidden="true">' + svgWrap(ICONS[t.icon] || ICONS.file) + '</div>'
     + '<div class="body">'
     +   '<h2>' + esc(t.title) + '</h2>'
