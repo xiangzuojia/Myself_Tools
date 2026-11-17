@@ -194,13 +194,13 @@
   <details class="howto" id="howto">
     <summary>如何添加新工具</summary>
     <ol>
-      <li>所有工具都放进仓库的 <code>tools/</code> 文件夹（<code>index.html</code> 自己留在根目录）。</li>
-      <li>单文件工具直接传成 <code>tools/xxx.html</code>；带 js / css / 图片的，在 <code>tools/</code> 里再建子文件夹，主文件命名为 <code>index.html</code>。</li>
-      <li>打开本文件，在底部 <code>TOOLS</code> 清单里加一行，<code>href</code> 写相对 <code>tools/</code> 的路径。</li>
+      <li>所有工具都放进仓库的 <code>html工具/</code> 文件夹（<code>index.html</code> 自己留在根目录）。</li>
+      <li>单文件工具直接传成 <code>html工具/xxx.html</code>；带 js / css / 图片的，在 <code>tools/</code> 里再建子文件夹，主文件命名为 <code>index.html</code>。</li>
+      <li>打开本文件，在底部 <code>TOOLS</code> 清单里加一行，<code>href</code> 写相对 <code>html工具/</code> 的路径。</li>
       <li>提交后等 Actions 跑完（约 40 秒），浏览器按 Ctrl+F5 强刷。</li>
     </ol>
     <pre>{ title: "图片压缩", desc: "纯浏览器内压缩，不上传服务器", href: "compress/", tag: "小工具", icon: "image" },</pre>
-    <p class="note">上面这行对应 <code>tools/compress/index.html</code>，网址是 <code>…/Myself_Tools/tools/compress/</code>。目录只在脚本顶部 <code>TOOLS_BASE</code> 定义一次，整体搬家改那一行就行。icon 可选：file / tool / image / text / chart / link。</p>
+    <p class="note">上面这行对应 <code>html工具/compress/index.html</code>，网址是 <code>…/Myself_Tools/tools/compress/</code>。目录只在脚本顶部 <code>TOOLS_BASE</code> 定义一次，整体搬家改那一行就行。icon 可选：file / tool / image / text / chart / link。</p>
   </details>
 
   <footer>
@@ -214,7 +214,7 @@
    工具统一放在仓库的这个文件夹里（相对仓库根目录）
    以后想整体换目录，只改这一行，下面的清单不用动
    ============================================================ */
-const TOOLS_BASE = "tools/";
+const TOOLS_BASE = "html工具/";
 
 /* ============================================================
    工具清单：以后加工具只改这里，加一行就行
@@ -225,9 +225,9 @@ const TOOLS_BASE = "tools/";
    ============================================================ */
 const TOOLS = [
   {
-    title: "SP Case 生成器",
+    title: "SP文件批量生成工具",
     desc: "按 SP 模板批量生成 case 同名文件，整体替换 search / inc / param / temp / tran 段落。",
-    href: "sp_case_maker.html",
+    href: "SP文件批量生成工具.html",
     tag: "脚本工具",
     icon: "file"
   }
