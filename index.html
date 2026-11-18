@@ -221,7 +221,7 @@ const TOOLS_BASE = "html工具/";
    工具清单：以后加工具只改这里，加一行就行
    href 写相对 html工具/ 的路径：
      单文件      → "SP文件批量生成工具.html"   实际位置 html工具/SP文件批量生成工具.html
-     带资源的目录 → "compress/"            实际位置 html工具/compress/index.html
+     带资源的目录 → "compress/"               实际位置 html工具/compress/index.html
    外链或绝对路径（以 http 或 / 开头）会原样使用，不拼前缀
    ============================================================ */
 const TOOLS = [
@@ -229,8 +229,15 @@ const TOOLS = [
     title: "SP文件批量生成工具",
     desc: "按 SP 模板批量生成 case 同名文件，整体替换 search / inc / param / temp / tran 段落。",
     href: "SP文件批量生成工具.html",
-    tag: "脚本工具",
+    tag: "脚本工具;SP文件;仿真",
     icon: "file"
+  }, // <--- 注意这里加了一个逗号
+  {
+    title: "Timing计算器_12CK",
+    desc: "基于Y25 85 12CK制作的Timing 计算工具",
+    href: "Timing计算器_12CK/", // 带资源的目录，写文件夹名称加斜杠即可
+    tag: "Timing;时序;计算器", // 你可以自定义
+    icon: "chart" // 可选：file / tool / image / text / chart / link
   }
 ];
 
