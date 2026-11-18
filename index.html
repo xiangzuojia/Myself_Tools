@@ -20,7 +20,19 @@
     --accent-soft:#eef0fe;
     --chip:#f2f3f5;
     --shadow:0 6px 18px rgba(15,23,42,.07);
+
+    /* 新增：倒计时专用配色 (浅色模式 - 柔和暖橙) */
+    --cd-bg: #fff7ed;
+    --cd-border: #ffedd5;
+    --cd-text-title: #9a3412;
+    --cd-text-num: #ea580c;
+    
+    /* 新增：假期达到后的配色 (浅色模式 - 薄荷绿) */
+    --cd-done-bg: #ecfdf5;
+    --cd-done-border: #d1fae5;
+    --cd-done-text: #047857;
   }
+
   @media (prefers-color-scheme: dark){
     :root{
       --bg:#14161a;
@@ -34,6 +46,17 @@
       --accent-soft:#25243c;
       --chip:#25292f;
       --shadow:0 6px 18px rgba(0,0,0,.35);
+
+      /* 新增：倒计时专用配色 (深色模式 - 深暗橘) */
+      --cd-bg: #2d1b14;
+      --cd-border: #43251b;
+      --cd-text-title: #fdba74;
+      --cd-text-num: #f97316;
+
+      /* 新增：假期达到后的配色 (深色模式 - 墨绿) */
+      --cd-done-bg: #052e16;
+      --cd-done-border: #14532d;
+      --cd-done-text: #4ade80;
     }
   }
   *{box-sizing:border-box;}
@@ -48,6 +71,15 @@
   .wrap{max-width:880px;margin:0 auto;padding:48px 20px 64px;}
 
   header{margin-bottom:26px;}
+  
+  .header-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+
   .brand{display:flex;align-items:center;gap:14px;}
   .logo{
     width:44px;height:44px;border-radius:12px;background:var(--accent);
@@ -56,6 +88,49 @@
   .logo svg{width:24px;height:24px;}
   h1{font-size:22px;font-weight:600;margin:0;letter-spacing:-.2px;}
   .sub{margin:2px 0 0;font-size:13px;color:var(--text-2);}
+
+  /* ✨ 优化后的倒计时组件：轻盈卡片风、横向排版 */
+  .countdown {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--cd-bg);
+    border: 1px solid var(--cd-border);
+    padding: 8px 16px;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+  }
+  .countdown .title {
+    font-size: 13px;
+    color: var(--cd-text-title);
+    font-weight: 500;
+  }
+  .countdown .num {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--cd-text-num);
+    line-height: 1;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; /* 数字等宽更整齐 */
+  }
+  .countdown .num span {
+    font-size: 13px;
+    font-weight: 500;
+    margin-left: 2px;
+  }
+  
+  /* 假期到达后的样式切换 */
+  .countdown.finished {
+    background: var(--cd-done-bg);
+    border-color: var(--cd-done-border);
+  }
+  .countdown.finished .title {
+    color: var(--cd-done-text);
+  }
+  .countdown.finished .num {
+    color: var(--cd-done-text);
+    font-family: inherit;
+    font-size: 16px; /* 纯文字时字号稍小 */
+  }
 
   .search{position:relative;margin-top:22px;}
   .search svg{
@@ -157,6 +232,9 @@
   @media (max-width:520px){
     .wrap{padding:32px 16px 48px;}
     .grid{grid-template-columns:1fr;}
+    .header-top{justify-content:center;text-align:center;}
+    .brand{flex-direction:column;text-align:center;}
+    .countdown{width:100%; justify-content:center; margin-top:10px;}
   }
 </style>
 </head>
@@ -164,15 +242,23 @@
 <div class="wrap">
 
   <header>
-    <div class="brand">
-      <div class="logo" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-        </svg>
+    <div class="header-top">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+          </svg>
+        </div>
+        <div>
+          <h1>Myself_</h1>
+          <p class="sub">个人使用的工具和源文件 · 全部在浏览器本地运行</p>
+        </div>
       </div>
-      <div>
-        <h1>Myself_</h1>
-        <p class="sub">个人使用的工具和源文件 · 全部在浏览器本地运行</p>
+
+      <!-- 倒计时组件（已修改为横向轻量卡片） -->
+      <div class="countdown" id="countdown">
+        <div class="title" id="cd-title">获取中...</div>
+        <div class="num" id="cd-num"><span>--</span></div>
       </div>
     </div>
 
@@ -212,32 +298,97 @@
 
 <script>
 /* ============================================================
-   工具统一放在仓库的这个文件夹里（相对仓库根目录）
-   以后想整体换目录，只改这一行，下面的清单不用动
+   1. 倒计时功能：自动获取公共节假日数据，并基于设备本地时间计算
+   ============================================================ */
+const HOLIDAY_DATA_URL = 'https://cdn.jsdelivr.net/gh/NateScarlet/holiday-cn@master/';
+
+// 辅助函数：获取 YYYY-MM-DD 格式的本地日期（避免时区问题导致算错天数）
+function getLocalDateStr(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+async function updateCountdownAuto() {
+    const titleEl = document.getElementById('cd-title');
+    const numEl = document.getElementById('cd-num');
+    const boxEl = document.getElementById('countdown');
+
+    try {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        
+        // 并行请求今年和明年的数据，防止年底时找不到明年的假期
+        const [currentYearData, nextYearData] = await Promise.all([
+            fetch(`${HOLIDAY_DATA_URL}${currentYear}.json`).then(r => r.ok ? r.json() : null),
+            fetch(`${HOLIDAY_DATA_URL}${currentYear + 1}.json`).then(r => r.ok ? r.json() : null)
+        ]);
+
+        // 合并数据，并只过滤出放假（isOffDay: true）的日期
+        const allHolidays = [
+            ...(currentYearData?.days || []),
+            ...(nextYearData?.days || [])
+        ].filter(d => d.isOffDay);
+
+        // 获取设备当前的本地日期字符串，用于比对
+        const todayStr = getLocalDateStr(now);
+        
+        // 找今天之后，最近的一个假期
+        const nextHoliday = allHolidays
+            .filter(d => d.date >= todayStr) // 包含今天（如果今天刚好是假期）
+            .sort((a, b) => a.date.localeCompare(b.date))[0];
+
+        if (!nextHoliday) {
+            throw new Error('未找到未来的节假日数据');
+        }
+
+        // 计算差值：目标日期的 00:00:00 减去 当前时间
+        const targetDate = new Date(nextHoliday.date + 'T00:00:00');
+        const timeDiff = targetDate.getTime() - now.getTime();
+        const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+        // 更新界面文字
+        if (daysDiff > 0) {
+            titleEl.textContent = `距离${nextHoliday.name}还有`;
+            numEl.innerHTML = `${daysDiff} <span>天</span>`;
+        } else {
+            titleEl.textContent = `🎉 已到`;
+            numEl.innerHTML = `${nextHoliday.name}`;
+            boxEl.classList.add('finished');
+        }
+
+    } catch (error) {
+        console.error('获取节假日数据失败:', error);
+        titleEl.textContent = '倒计时服务加载失败';
+        numEl.innerHTML = '';
+    }
+}
+
+// 页面加载时执行，并且每小时更新一次（防止页面开太久跨天）
+updateCountdownAuto();
+setInterval(updateCountdownAuto, 1000 * 60 * 60);
+
+
+/* ============================================================
+   2. 工具目录配置与渲染
    ============================================================ */
 const TOOLS_BASE = "html工具/";
 
-/* ============================================================
-   工具清单：以后加工具只改这里，加一行就行
-   href 写相对 html工具/ 的路径：
-     单文件      → "SP文件批量生成工具.html"   实际位置 html工具/SP文件批量生成工具.html
-     带资源的目录 → "compress/"               实际位置 html工具/compress/index.html
-   外链或绝对路径（以 http 或 / 开头）会原样使用，不拼前缀
-   ============================================================ */
 const TOOLS = [
   {
     title: "SP文件批量生成工具",
     desc: "按 SP 模板批量生成 case 同名文件，整体替换 search / inc / param / temp / tran 段落。",
     href: "SP文件批量生成工具.html",
-    tag: "脚本工具;SP文件;仿真",
+    tag: "脚本工具",
     icon: "file"
-  }, // <--- 注意这里加了一个逗号
+  },
   {
     title: "Timing计算器_12CK",
-    desc: "基于Y25 85 12CK制作的Timing 计算工具",
-    href: "Timing计算器_12CK/", // 带资源的目录，写文件夹名称加斜杠即可
-    tag: "Timing;时序;计算器", // 你可以自定义
-    icon: "chart" // 可选：file / tool / image / text / chart / link
+    desc: "基于Y25 85 12CK制作的Timing计算工具",
+    href: "Timing计算器_12CK/",
+    tag: "Timing时序计算器",
+    icon: "chart"
   }
 ];
 
