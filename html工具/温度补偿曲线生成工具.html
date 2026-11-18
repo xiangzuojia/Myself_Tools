@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>温度补偿曲线生成器</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .container {
+            display: flex;
+            gap: 30px;
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            max-width: 1200px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .controls {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-width: 250px;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .input-group label {
+            font-size: 14px;
+            font-weight: bold;
+            color: #555;
+        }
+        .input-group input {
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        .btn {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .canvas-container {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        canvas {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            cursor: crosshair;
+            max-width: 100%;
+            height: auto;
+        }
+        .hint {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #e67e22;
+            font-weight: bold;
+            background: #fff3e0;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>温度补偿曲线生成工具</h1>
+
+    <div class="container">
+        <!-- 左侧控制面板 -->
+        <div class="controls">
+            <div class="input-group">
+                <label>高电压值 (例如: 38V)</label>
+                <input type="text" id="vHigh" value="38V" oninput="drawChart()">
+            </div>
+            <div class="input-group">
+                <label>低电压值 (例如: 28V)</label>
+                <input type="text" id="vLow" value="28V" oninput="drawChart()">
+            </div>
+            <div class="input-group">
+                <label>起始温度 (例如: 35℃)</label>
+                <input type="text" id="tLow" value="35℃" oninput="drawChart()">
+            </div>
+            <div class="input-group">
+                <label>结束温度 (例如: 45℃)</label>
+                <input type="text" id="tHigh" value="45℃" oninput="drawChart()">
+            </div>
+            <div class="input-group">
+                <label>底部注释文字</label>
+                <input type="text" id="noteText" value="The temperature compensation curve is only for ambient temperature, not PCB temperature." oninput="drawChart()">
+            </div>
+            
+            <button class="btn" onclick="downloadImage()">下载 PNG 图片</button>
+        </div>
+
+        <!-- 右侧画布区域 -->
+        <div class="canvas-container">
+            <canvas id="myCanvas" width="700" height="450"></canvas>
+            <div class="hint">
+                💡 提示：你也可以直接在图片上 <b>点击鼠标右键</b> -> 选择 <b>“图片另存为...”</b> 保存到本地。
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('myCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 获取输入框元素
+        const vHighInput = document.getElementById('vHigh');
+        const vLowInput = document.getElementById('vLow');
+        const tLowInput = document.getElementById('tLow');
+        const tHighInput = document.getElementById('tHigh');
+        const noteInput = document.getElementById('noteText');
+
+        // 核心绘图函数
+        function drawChart() {
+            // 1. 清空画布并填充白色背景
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 获取当前输入的值
+            const vHigh = vHighInput.value || '38V';
+            const vLow = vLowInput.value || '28V';
+            const tLow = tLowInput.value || '35℃';
+            const tHigh = tHighInput.value || '45℃';
+            const note = noteInput.value || '';
+
+            // 2. 定义坐标点
+            const originX = 100;
+            const originY = 350;
+            
+            const yHigh = 100; 
+            const yLow = 250;  
+            
+            const xStart = 150; 
+            const xT1 = 250;    
+            const xT2 = 450;    
+            const xEnd = 650;   
+
+            // 3. 绘制坐标轴
+            ctx.beginPath();
+            ctx.moveTo(originX, 50);       
+            ctx.lineTo(originX, originY);  
+            ctx.lineTo(670, originY);      
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 4. 绘制虚线及辅助线
+            ctx.setLineDash([5, 5]); // 启用虚线模式
+
+            // 绘制横向黑色虚线
+            ctx.beginPath();
+            ctx.strokeStyle = '#000000'; // 黑色
+            ctx.moveTo(originX, yHigh);
+            ctx.lineTo(xT1, yHigh);
+            ctx.moveTo(originX, yLow);
+            ctx.lineTo(xT2, yLow);
+            ctx.stroke();
+
+            // 绘制垂直蓝色虚线
+            ctx.beginPath();
+            ctx.strokeStyle = '#0000ff'; // 蓝色
+            ctx.moveTo(xT1, yHigh);
+            ctx.lineTo(xT1, originY);
+            ctx.moveTo(xT2, yLow);
+            ctx.lineTo(xT2, originY);
+            ctx.stroke();
+            
+            ctx.setLineDash([]); // 恢复实线
+
+            // 5. 绘制红色主折线
+            ctx.beginPath();
+            ctx.moveTo(xStart, yHigh);
+            ctx.lineTo(xT1, yHigh);
+            ctx.lineTo(xT2, yLow);
+            ctx.lineTo(xEnd, yLow);
+            ctx.strokeStyle = '#ff0000'; 
+            ctx.lineWidth = 3;
+            ctx.lineJoin = 'miter'; 
+            ctx.stroke();
+
+            // 6. 绘制文本标签
+            ctx.fillStyle = '#000000';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            
+            ctx.font = 'bold 18px Arial';
+            ctx.fillText(vHigh, originX - 10, yHigh);
+            ctx.fillText(vLow, originX - 10, yLow);
+
+            ctx.textAlign = 'center';
+            ctx.fillText(tLow, xT1, originY + 25);
+            ctx.fillText(tHigh, xT2, originY + 25);
+
+            ctx.font = 'bold 20px Arial';
+            ctx.fillText('VGH', originX, 25);
+            ctx.fillText('T', 690, originY);
+
+            // 7. 绘制底部注释 (智能平衡两行长度)
+            ctx.font = '16px Arial';
+            ctx.fillStyle = '#000000';
+            ctx.textAlign = 'center';
+            
+            drawBalancedText(ctx, note, canvas.width / 2, originY + 60, 600, 25);
+        }
+
+        // 智能平衡换行算法
+        function drawBalancedText(ctx, text, x, y, maxWidth, lineHeight) {
+            const fullWidth = ctx.measureText(text).width;
+            
+            // 如果文字总宽度没超过最大宽度，直接一行显示
+            if (fullWidth <= maxWidth) {
+                ctx.fillText(text, x, y);
+                return;
+            }
+
+            // 如果超过一行，寻找最接近总宽度一半的空格作为断点
+            const halfWidth = fullWidth / 2;
+            let bestIndex = -1;
+            let minDiff = Infinity;
+            
+            for (let i = 0; i < text.length; i++) {
+                if (text[i] === ' ') {
+                    let leftPart = text.substring(0, i);
+                    let width = ctx.measureText(leftPart).width;
+                    
+                    // 确保断点左侧不会超出最大宽度限制
+                    if (width <= maxWidth) {
+                        let diff = Math.abs(width - halfWidth);
+                        if (diff < minDiff) {
+                            minDiff = diff;
+                            bestIndex = i;
+                        }
+                    }
+                }
+            }
+            
+            // 如果找到了合适的断点，分成两行绘制
+            if (bestIndex !== -1) {
+                let line1 = text.substring(0, bestIndex);
+                let line2 = text.substring(bestIndex + 1);
+                ctx.fillText(line1, x, y);
+                ctx.fillText(line2, x, y + lineHeight);
+            } else {
+                // 如果没有空格（比如纯中文），则按长度强制均分
+                let mid = Math.floor(text.length / 2);
+                ctx.fillText(text.substring(0, mid), x, y);
+                ctx.fillText(text.substring(mid), x, y + lineHeight);
+            }
+        }
+
+        // 下载图片功能
+        function downloadImage() {
+            const link = document.createElement('a');
+            link.download = '温度补偿曲线图.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // 页面加载完成后立即绘制一次
+        window.onload = drawChart;
+
+    </script>
+</body>
+</html>
