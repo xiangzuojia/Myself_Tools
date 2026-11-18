@@ -2,7 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 增加 viewport meta 标签，确保移动端正确缩放 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>温度补偿曲线生成器</title>
     <style>
         body {
@@ -14,13 +15,16 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            box-sizing: border-box;
         }
         h1 {
             font-size: 24px;
-            margin-bottom: 20px;
+            margin: 10px 0 20px 0;
+            text-align: center;
         }
         .container {
             display: flex;
+            flex-direction: row; /* 默认桌面端横向排列 */
             gap: 30px;
             background: #fff;
             padding: 30px;
@@ -48,27 +52,30 @@
             color: #555;
         }
         .input-group input {
-            padding: 8px 10px;
+            padding: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
-            font-size: 14px;
+            font-size: 16px; /* 移动端输入框字号需>=16px防缩放 */
             transition: border-color 0.3s;
+            box-sizing: border-box;
+            width: 100%;
         }
         .input-group input:focus {
             outline: none;
             border-color: #007bff;
         }
         .btn {
-            padding: 10px 15px;
+            padding: 12px 15px;
             background-color: #007bff;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: bold;
             transition: background-color 0.3s;
             margin-top: 10px;
+            width: 100%;
         }
         .btn:hover {
             background-color: #0056b3;
@@ -79,14 +86,15 @@
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
+            width: 100%;
         }
         canvas {
             background-color: #ffffff;
             border: 1px solid #e0e0e0;
             border-radius: 5px;
             cursor: crosshair;
-            max-width: 100%;
-            height: auto;
+            max-width: 100%; /* 确保不超出屏幕 */
+            height: auto; /* 保持比例 */
         }
         .hint {
             margin-top: 15px;
@@ -94,20 +102,49 @@
             color: #e67e22;
             font-weight: bold;
             background: #fff3e0;
-            padding: 10px 20px;
+            padding: 12px;
             border-radius: 5px;
             text-align: center;
             width: 100%;
             box-sizing: border-box;
+            line-height: 1.5;
+        }
+
+        /* ====== 移动端响应式适配 ====== */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            h1 {
+                font-size: 20px;
+            }
+            .container {
+                flex-direction: column; /* 移动端改为上下堆叠 */
+                padding: 15px;
+                gap: 20px;
+            }
+            .controls {
+                min-width: 100%;
+            }
+            .canvas-container {
+                /* 在移动端，为了让图表尽量大，允许横向滚动（如果需要），或者直接缩放 */
+                overflow-x: auto;
+                align-items: flex-start;
+            }
+            canvas {
+                /* 移动端自适应屏幕宽度 */
+                width: 100%; 
+                max-width: 100%;
+            }
         }
     </style>
 </head>
 <body>
 
-    <h1>温度补偿曲线生成工具</h1>
+    <h1>温度补偿曲线生成器</h1>
 
     <div class="container">
-        <!-- 左侧控制面板 -->
+        <!-- 左侧/上方控制面板 -->
         <div class="controls">
             <div class="input-group">
                 <label>高电压值 (例如: 38V)</label>
@@ -130,14 +167,14 @@
                 <input type="text" id="noteText" value="The temperature compensation curve is only for ambient temperature, not PCB temperature." oninput="drawChart()">
             </div>
             
-            <button class="btn" onclick="downloadImage()">下载 PNG 图片</button>
+            <button class="btn" onclick="downloadImage()">📥 下载 PNG 图片</button>
         </div>
 
-        <!-- 右侧画布区域 -->
+        <!-- 右侧/下方画布区域 -->
         <div class="canvas-container">
             <canvas id="myCanvas" width="700" height="450"></canvas>
             <div class="hint">
-                💡 提示：你也可以直接在图片上 <b>点击鼠标右键</b> -> 选择 <b>“图片另存为...”</b> 保存到本地。
+                💡 提示：移动端请 <b>长按图片</b> 保存，或直接点击上方“下载图片”按钮。电脑端可右键另存为。
             </div>
         </div>
     </div>
@@ -192,7 +229,7 @@
 
             // 绘制横向黑色虚线
             ctx.beginPath();
-            ctx.strokeStyle = '#000000'; // 黑色
+            ctx.strokeStyle = '#000000'; 
             ctx.moveTo(originX, yHigh);
             ctx.lineTo(xT1, yHigh);
             ctx.moveTo(originX, yLow);
@@ -201,7 +238,7 @@
 
             // 绘制垂直蓝色虚线
             ctx.beginPath();
-            ctx.strokeStyle = '#0000ff'; // 蓝色
+            ctx.strokeStyle = '#0000ff'; 
             ctx.moveTo(xT1, yHigh);
             ctx.lineTo(xT1, originY);
             ctx.moveTo(xT2, yLow);
@@ -250,13 +287,11 @@
         function drawBalancedText(ctx, text, x, y, maxWidth, lineHeight) {
             const fullWidth = ctx.measureText(text).width;
             
-            // 如果文字总宽度没超过最大宽度，直接一行显示
             if (fullWidth <= maxWidth) {
                 ctx.fillText(text, x, y);
                 return;
             }
 
-            // 如果超过一行，寻找最接近总宽度一半的空格作为断点
             const halfWidth = fullWidth / 2;
             let bestIndex = -1;
             let minDiff = Infinity;
@@ -266,7 +301,6 @@
                     let leftPart = text.substring(0, i);
                     let width = ctx.measureText(leftPart).width;
                     
-                    // 确保断点左侧不会超出最大宽度限制
                     if (width <= maxWidth) {
                         let diff = Math.abs(width - halfWidth);
                         if (diff < minDiff) {
@@ -277,14 +311,12 @@
                 }
             }
             
-            // 如果找到了合适的断点，分成两行绘制
             if (bestIndex !== -1) {
                 let line1 = text.substring(0, bestIndex);
                 let line2 = text.substring(bestIndex + 1);
                 ctx.fillText(line1, x, y);
                 ctx.fillText(line2, x, y + lineHeight);
             } else {
-                // 如果没有空格（比如纯中文），则按长度强制均分
                 let mid = Math.floor(text.length / 2);
                 ctx.fillText(text.substring(0, mid), x, y);
                 ctx.fillText(text.substring(mid), x, y + lineHeight);
@@ -293,10 +325,40 @@
 
         // 下载图片功能
         function downloadImage() {
+            const dataUrl = canvas.toDataURL('image/png');
+            
+            // 创建隐藏的 a 标签触发下载
             const link = document.createElement('a');
             link.download = '温度补偿曲线图.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
+            link.href = dataUrl;
+            
+            // 针对移动端及部分不支持直接下载的浏览器做兼容处理
+            if (/(iPhone|iPad|iPod|Android)/i.test(navigator.userAgent)) {
+                // 移动端：创建一个临时图片供用户长按保存
+                const tempImg = new Image();
+                tempImg.src = dataUrl;
+                tempImg.style.position = 'fixed';
+                tempImg.style.top = '0';
+                tempImg.style.left = '0';
+                tempImg.style.width = '100%';
+                tempImg.style.height = '100%';
+                tempImg.style.backgroundColor = 'rgba(0,0,0,0.8)';
+                tempImg.style.zIndex = '9999';
+                tempImg.style.objectFit = 'contain';
+                
+                // 点击图片关闭预览
+                tempImg.onclick = function() {
+                    document.body.removeChild(tempImg);
+                };
+                
+                document.body.appendChild(tempImg);
+                alert("已生成高清图片，请长按图片保存到手机相册。点击图片可关闭预览。");
+            } else {
+                // 电脑端：直接下载
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
         }
 
         // 页面加载完成后立即绘制一次
