@@ -1,0 +1,896 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>12CK Timing 计算器</title>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="%23123a63"/><path d="M6 20h4l3-8 4 12 3-6h6" stroke="%23fff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'>
+<style>
+  :root {
+    --bg: #e9edf2;
+    --panel: #ffffff;
+    --line: #c8d0d9;
+    --line-strong: #aab4bf;
+    --head-bg: #f2f4f7;
+    --ink: #1c2430;
+    --muted: #68737f;
+    --navy: #123a63;
+    --blue: #1e5fae;
+    --blue-soft: #eaf2fd;
+    --red: #e07070;
+    --red-deep: #c25050;
+    --red-soft: #fdf3f3;
+    --amber: #a9741f;
+    --amber-soft: #fdf6ea;
+    --amber-line: #e0c399;
+    --input-bg: #fffdf2;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .wrap { width: 100%; max-width: 780px; margin: 0 auto; padding: 18px 14px 30px; }
+
+  .head {
+    background: var(--navy);
+    color: #fff;
+    border-radius: 10px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .head h1 { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: .03em; }
+  .head .sub { font-size: 12.5px; color: #b9c9dd; margin-top: 2px; }
+  .save-state { flex: none; font-size: 12px; color: #9fb4cc; }
+  .save-state::before {
+    content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+    background: #4cd28a; margin-right: 6px; vertical-align: 1px;
+  }
+
+  .data-bar {
+    margin-top: 10px; padding: 7px 12px; background: #fff;
+    border: 1px solid var(--line); border-left: 3px solid #4c9be8;
+    border-radius: 7px; font-size: 12px; color: #4a5560;
+  }
+  .data-bar.err { border-left-color: var(--red-deep); background: var(--red-soft); color: #a04a4a; }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-top: 12px;
+  }
+  .card-title {
+    font-size: 13px; font-weight: 700; color: var(--muted);
+    letter-spacing: .06em; margin-bottom: 10px;
+  }
+
+  .controls { display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; }
+  .ctl { display: flex; flex-direction: column; gap: 4px; }
+  .ctl label { font-size: 12px; color: var(--muted); }
+  .ctl input {
+    height: 40px; padding: 0 10px; border: 1px solid var(--line-strong);
+    border-radius: 6px; font-size: 16px; color: var(--ink); background: #fff;
+    min-width: 0; font-family: inherit;
+  }
+  .ctl input:focus { outline: 2px solid #7fb0e8; outline-offset: -1px; border-color: var(--blue); }
+  .ctl .num { width: 96px; font-variant-numeric: tabular-nums; }
+  .ctl .num.small { width: 84px; }
+  .ctl input.is-manual { border-color: var(--amber-line); background: #fffaf0; }
+  .inline-check { display: flex; align-items: center; gap: 8px; }
+  .check {
+    display: inline-flex; align-items: center; gap: 7px; height: 40px; min-height: 40px;
+    padding: 0 10px 0 6px; border: 1px solid var(--line-strong);
+    border-radius: 6px; cursor: pointer; font-size: 13.5px; background: #fff;
+    user-select: none;
+  }
+  .check input { width: 17px; height: 17px; accent-color: var(--blue); }
+  .btn {
+    height: 40px; padding: 0 16px; border: 1px solid var(--line-strong);
+    border-radius: 6px; background: #fff; color: var(--ink); font-size: 14px;
+    cursor: pointer; font-family: inherit;
+  }
+  .btn:hover { background: #f6f8fa; }
+  .btn:focus-visible { outline: 2px solid #7fb0e8; outline-offset: 2px; }
+
+  .oneH-read {
+    margin-left: auto; text-align: right; padding: 6px 12px; background: var(--blue-soft);
+    border: 1px solid #c9ddf3; border-radius: 8px; white-space: nowrap;
+  }
+  .oneH-read .k { font-size: 12px; color: var(--blue); }
+  .oneH-read .v { font-size: 26px; font-weight: 700; color: var(--navy); font-variant-numeric: tabular-nums; line-height: 1.15; }
+  .oneH-read .u { font-size: 13px; color: var(--blue); margin-left: 3px; }
+
+  .mm-toggle { margin-left: auto; }
+
+  .link-row {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line);
+    font-size: 12px; color: var(--muted);
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px;
+    border: 1px solid #c9ddf3; border-radius: 999px; background: var(--blue-soft);
+    color: var(--blue); font-size: 12px; font-family: inherit; cursor: pointer;
+  }
+  .chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #2f7fd0; }
+  .chip.manual { border-color: var(--amber-line); background: var(--amber-soft); color: var(--amber); }
+  .chip.manual::before { background: #d79b2b; }
+  .chip:focus-visible { outline: 2px solid #7fb0e8; outline-offset: 2px; }
+
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; font-variant-numeric: tabular-nums; }
+  th, td {
+    border: 1px solid var(--line); padding: 8px 10px; text-align: center; vertical-align: middle;
+  }
+  thead th { background: var(--head-bg); font-weight: 700; font-size: 12.5px; color: #3c4652; white-space: nowrap; }
+  td.no { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+  td.name { text-align: left; font-size: 13.5px; }
+  .row { display: inline-flex; align-items: center; gap: 5px; }
+  td.hcol, td.uscol { text-align: center; }
+  td.hcol .row, td.uscol .row { justify-content: center; }
+  td.hcol input {
+    width: 88px; height: 34px; text-align: center; border: 1px solid var(--line-strong);
+    border-radius: 5px; background: var(--input-bg); font-size: 15px; color: var(--ink);
+    font-variant-numeric: tabular-nums; font-family: inherit;
+  }
+  td.hcol input:focus { outline: 2px solid #7fb0e8; outline-offset: -1px; border-color: var(--blue); background: #fff; }
+  td.hcol input.is-manual { border-color: var(--amber-line); background: #fffaf0; }
+  td.hcol .unit { color: var(--muted); font-size: 12.5px; margin-left: 4px; }
+  td.hcol .lock { font-size: 14px; }
+  td.uscol { text-align: center; }
+  td.uscol input {
+    width: 92px; height: 34px; text-align: center; border: 1px solid var(--line-strong);
+    border-radius: 5px; background: var(--input-bg); font-size: 15px; color: var(--ink);
+    font-variant-numeric: tabular-nums; font-family: inherit;
+  }
+  td.uscol input:focus { outline: 2px solid #7fb0e8; outline-offset: -1px; border-color: var(--blue); background: #fff; }
+  td.uscol .unit { color: var(--muted); font-size: 12.5px; margin-left: 4px; }
+  td.uscol .lock { font-size: 13.5px; }
+  td.uscol .tip { display: block; font-size: 11px; color: var(--muted); }
+  td.uscol .tip.miss { color: var(--red-deep); }
+  /* Charge 行：数值锁在格子正中，「表值 / 未收录」小字排在右侧（桌面与手机一致） */
+  tr.t-us td.uscol {
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+  }
+  tr.t-us td.uscol .lock { grid-column: 2; }
+  tr.t-us td.uscol .tip { grid-column: 3; justify-self: start; padding-left: 6px; white-space: nowrap; line-height: 1.4; }
+  tr.hl td { background: var(--red-soft); }
+  tr.hl td.hcol input { border: 2px solid var(--red); background: #fff; }
+  tr.hl td.name::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--red); margin-right: 6px; vertical-align: 1px; }
+  td.tmm { font-size: 13px; color: var(--blue); }
+  thead th.th-mm { background: var(--blue-soft); color: var(--blue); }
+
+  /* Num 行：标题整行 + 两行「标签 | 数值」 */
+  td.num-block { padding: 0; }
+  .numb-title {
+    text-align: center; font-weight: 700; font-size: 13.5px; color: #2c3642;
+    background: var(--head-bg); padding: 8px 10px; letter-spacing: .02em;
+    border-bottom: 1px solid var(--line);
+  }
+  .numb-row { display: flex; align-items: stretch; }
+  .numb-row + .numb-row { border-top: 1px solid var(--line); }
+  .numb-l, .numb-v { flex: 1 1 50%; min-width: 0; text-align: center; padding: 7px 10px; font-size: 13.5px; }
+  .numb-l { border-right: 1px solid var(--line); color: #3c4652; }
+  .numb-v { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--ink); }
+
+  .foot { font-size: 12px; color: var(--muted); margin-top: 14px; line-height: 1.75; }
+  .foot b { color: #4a5560; font-weight: 700; }
+
+  @media (max-width: 560px) {
+    .wrap { padding: 10px 10px 24px; }
+
+    /* ① 标题栏精简：只留居中标题，保存状态缩成右上角小圆点 */
+    .head { padding: 10px 12px; justify-content: center; position: relative; }
+    .head h1 { font-size: 16px; letter-spacing: .04em; }
+    .head .sub { display: none; }
+    .save-state {
+      position: absolute; top: 50%; right: 11px; transform: translateY(-50%);
+      margin: 0; font-size: 0; line-height: 0;
+    }
+    .save-state::before { margin-right: 0; }
+
+    .data-bar { margin-top: 8px; padding: 5px 9px; font-size: 11px; line-height: 1.45; }
+    .card { padding: 12px; margin-top: 10px; }
+    .card-title { font-size: 12px; margin-bottom: 8px; }
+
+    /* ② 控件高度统一 40px，按内容自然换行 */
+    .controls { gap: 10px 12px; }
+    .ctl input { height: 40px; }
+    .ctl .num { width: 104px; }
+    .ctl .num.small { width: 104px; flex: none; }
+    .check { height: 40px; min-height: 40px; padding: 0 10px 0 8px; gap: 6px; }
+    .btn { height: 40px; }
+    .inline-check { gap: 6px; }
+    .oneH-read {
+      flex: 1 1 100%; margin-left: 0; padding: 6px 12px;
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    }
+    .oneH-read .v { font-size: 20px; }
+    .oneH-read .u { font-size: 12px; }
+    .mm-toggle { margin-left: 0; }
+    .link-row { margin-top: 10px; padding-top: 8px; font-size: 11.5px; gap: 6px; }
+    .chip { font-size: 11.5px; padding: 3px 9px; }
+
+    /* ③ 表格 → 参数卡片：参数名整行居中，下一行 No. / H 数 / 实测 */
+    .table-scroll { overflow: visible; }
+    #mainTable, #mainTable thead, #mainTable tbody, #mainTable tr,
+    #mainTable td, #mainTable th { display: block; }
+    #mainTable colgroup, #mainTable thead { display: none; }
+
+    #mainTable tr {
+      display: grid;
+      grid-template-columns: 64px minmax(0, 1fr) minmax(0, 1.15fr);
+      grid-template-areas: "hd hd hd" "no h us";
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+    #mainTable tr.mm { grid-template-areas: "hd hd hd" "no h us" "no h mn" "no h mx"; }
+    #mainTable tr.t-us { grid-template-areas: "hd hd hd" "no us us"; }
+    #mainTable tr.t-us.mm { grid-template-areas: "hd hd hd" "no us us" "no mn mn" "no mx mx"; }
+    #mainTable tr.t-static { grid-template-areas: "hd hd hd" "no h h"; }
+
+    #mainTable td { border: 0; padding: 7px 10px; }
+
+    #mainTable td.name {
+      grid-area: hd; text-align: center; font-weight: 700; font-size: 13.5px;
+      background: var(--head-bg); color: #2c3642; letter-spacing: .02em;
+      border-bottom: 1px solid var(--line); padding: 7px 10px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    #mainTable tr.hl td.name { background: #fbe9e9; color: #8d3b3b; }
+    #mainTable tr.hl td.name::before { vertical-align: 0; }
+
+    #mainTable td.no {
+      grid-area: no; display: flex; align-items: center; justify-content: center;
+      font-size: 12px; color: var(--muted); border-right: 1px solid var(--line);
+    }
+    #mainTable td.hcol { grid-area: h; display: flex; align-items: center; justify-content: center; }
+    #mainTable td.uscol {
+      grid-area: us; display: flex; align-items: center; justify-content: center;
+      gap: 4px; text-align: center;
+    }
+    #mainTable td.hcol input { width: 100%; max-width: 92px; height: 36px; font-size: 16px; }
+    #mainTable td.uscol input { width: 100%; max-width: 92px; height: 36px; font-size: 16px; }
+    #mainTable td.uscol .lock { font-size: 13.5px; }
+    /* Charge：数值锁在格子正中，表值小字排在右侧空白区，不影响居中 */
+    #mainTable tr.t-us td.uscol {
+      display: grid; grid-template-columns: 1fr auto 1fr; gap: 0;
+      align-items: center; justify-content: stretch;
+    }
+    #mainTable tr.t-us td.uscol .lock { grid-column: 2; font-size: 14.5px; }
+    #mainTable td.uscol .tip { display: inline; font-size: 10.5px; line-height: 1.25; margin-left: 0; color: var(--muted); }
+    #mainTable tr.t-us td.uscol .tip {
+      grid-column: 3; justify-self: start; padding-left: 6px; white-space: nowrap;
+    }
+
+    /* H 数与实测之间的细分隔线（Charge / Num 行无 H 格，不画） */
+    #mainTable tr:not(.t-us):not(.t-num) td.hcol { border-right: 1px solid var(--line); }
+
+    #mainTable tr.t-us td.hcol { display: none; }
+    #mainTable tr.t-static td.uscol { display: none; }
+    #mainTable tr.t-static td.tmm { display: none; }
+
+    /* Num：整行一块，内部两行/两列 */
+    #mainTable tr.t-num { display: block; }
+    #mainTable tr.t-num td.num-block { display: block; padding: 0; }
+    #mainTable tr.t-num .numb-title { padding: 7px 10px; }
+    #mainTable tr.t-num .numb-l, #mainTable tr.t-num .numb-v { padding: 7px 10px; }
+
+    #mainTable td[data-mn] { grid-area: mn; }
+    #mainTable td[data-mx] { grid-area: mx; }
+    #mainTable td.tmm {
+      font-size: 11px; color: var(--blue); padding: 0 10px 6px;
+      display: flex; align-items: center; justify-content: center; gap: 4px;
+    }
+    #mainTable td[data-mn]::before { content: "Min "; color: var(--muted); }
+    #mainTable td[data-mx]::before { content: "Max "; color: var(--muted); }
+
+    .foot { font-size: 11px; line-height: 1.7; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="head">
+    <div>
+      <h1>12CK Timing 计算器</h1>
+      <div class="sub">Y25 85 12CK · GOA 时序规格速算（数据源：同文件夹 Y25_85.js）</div>
+    </div>
+    <div class="save-state" id="saveState" role="status" aria-live="polite">自动保存</div>
+  </header>
+
+  <div class="data-bar" id="dataBar" role="status" aria-live="polite">
+    <span id="dataNote">正在加载数据表…</span>
+  </div>
+
+  <section class="card" aria-label="参数">
+    <div class="controls">
+      <div class="ctl">
+        <label for="freq">频率 (Hz)</label>
+        <input class="num" id="freq" type="number" step="1" min="1" inputmode="decimal" list="freqList" value="288">
+      </div>
+      <div class="ctl">
+        <label>模式</label>
+        <label class="check"><input type="checkbox" id="hsr" checked> 是否为 HSR 模式</label>
+      </div>
+      <div class="ctl">
+        <label for="vtotal">Vtotal</label>
+        <input class="num" id="vtotal" type="number" step="1" min="1" inputmode="decimal" value="2250">
+      </div>
+      <div class="ctl">
+        <label for="manual1h">手动指定 1H(us)</label>
+        <div class="inline-check">
+          <label class="check"><input type="checkbox" id="manual1h"> 手输</label>
+          <input class="num small" id="oneH" type="number" step="0.01" min="0.01" inputmode="decimal" value="1.54" disabled>
+        </div>
+      </div>
+      <div class="oneH-read" aria-label="当前 1H">
+        <div class="k">1H（自动计算）</div>
+        <div><span class="v" id="oneHRead">1.54</span><span class="u">us</span></div>
+      </div>
+      <label class="check mm-toggle" id="mmToggle"><input type="checkbox" id="mmShow"> 显示 Min / Max（±2%）</label>
+      <button class="btn" id="resetBtn" type="button">重置</button>
+    </div>
+
+    <div class="link-row">
+      <button class="chip" id="chipVt" type="button">Vtotal · 自动带入</button>
+      <button class="chip" id="chipCk" type="button">CK W · 自动带入</button>
+      <span>切换频率 / HSR 时自动带入表内数值；手动改过的项显示为橙色，点此可恢复自动</span>
+    </div>
+  </section>
+
+  <section class="card" aria-label="参数表">
+    <div class="card-title">参数配置表（12CK）</div>
+    <div class="table-scroll">
+      <table id="mainTable">
+        <colgroup></colgroup>
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="foot">
+    <b>计算规则：</b>1H = 1,000,000 ÷ (Hz × Vtotal)；H 数 × 1H = 实测(us)；Min / Max = Spec × 0.98 / × 1.02。<br>
+    <b>固定项：</b>除 CK W 外，其余参数均为固定默认值（Data W、STV-CK1、CK1&2 Rising/Falling、STV Width、CK ALL、CK8-RST、RST Width、RST-LC、LC-STV、LC-W），无需手改。<br>
+    <b>CK Low：</b>= CK ALL − CK W（如 CK W = 5.8H、CK ALL = 12H → CK Low = 6.2H），其 Min / Max 按 6.2H 推算。<br>
+    <b>只改一处：</b>CK W 按频率从 Y25_85.js 自动带入，可直接改数字覆盖（改过后显示为橙色）。数值仅保存在本机浏览器。<br>
+    <b>如何新增频率：</b>编辑同文件夹的 <b>Y25_85.js</b>，复制一段并改标题与三行数值（Vtotal / 充电时间 / CK Duty），保存后刷新本页即可。
+  </div>
+</div>
+
+<script src="Y25_85.js"></script>
+<datalist id="freqList"></datalist>
+
+<script>
+(function () {
+  'use strict';
+
+  var STORAGE_KEY = 'timingCalc12CK.v3';
+  var DATA_FILE = 'Y25_85';
+  var MIN_RATIO = 0.98, MAX_RATIO = 1.02;
+  var HSR_DATA_W = 2, NORMAL_DATA_W = 1;
+  var LC_W_FIXED_S = 100 / 60; /* 1.67s 固定 */
+
+  /* 数据文件缺失时的兜底表 */
+  var FALLBACK = [
+    { freq: 60,  hsr: false, charge: 4 },
+    { freq: 120, hsr: false, charge: 2 },
+    { freq: 120, hsr: true,  charge: 3 },
+    { freq: 132, hsr: false, charge: 1.9 },
+    { freq: 144, hsr: false, charge: 1.8 },
+    { freq: 144, hsr: true,  charge: 2.3, vtotal: 1125 },
+    { freq: 150, hsr: false, charge: 1.3 },
+    { freq: 165, hsr: false, charge: 1 },
+    { freq: 165, hsr: true,  charge: 2.1 },
+    { freq: 170, hsr: false, charge: 1 },
+    { freq: 180, hsr: false, charge: 1, vtotal: 2216 },
+    { freq: 240, hsr: true,  charge: 1.8 },
+    { freq: 265, hsr: true,  charge: 1.5 },
+    { freq: 288, hsr: true,  charge: 1.3 },
+    { freq: 300, hsr: true,  charge: 1 },
+    { freq: 330, hsr: true,  charge: 0.8 },
+    { freq: 360, hsr: true,  charge: 0.8, vtotal: 2216 }
+  ];
+
+  /* 参数表：只有 CK W 可手改；其余为固定默认值
+     type = auto(Data W 联动) | charge(查表us) | fixed(固定H) | ckw(可编辑H)
+          | derived(CK Low = CK ALL − CK W) | min(≥NH 约束) | lcw(LC W) | static(纯文本) */
+  var ROWS = [
+    { no: '1',   key: 'dataw',  name: 'Data W',        type: 'auto' },
+    { no: '2',   key: 'charge', name: 'Charge Time',   type: 'charge' },
+    { no: '3',   key: 'stvck1', name: 'STV-CK1',       type: 'fixed', h: 5 },
+    { no: '4-1', key: 'ck12r',  name: 'CK1&2 Rising',  type: 'fixed', h: 1 },
+    { no: '4-2', key: 'ck12f',  name: 'CK1&2 Falling', type: 'fixed', h: 1 },
+    { no: '5',   key: 'stvw',   name: 'STV Width',     type: 'fixed', h: 10 },
+    { no: '6-1', key: 'ckw',    name: 'CK W',          type: 'ckw', h: 5.8, hl: true },
+    { no: '6-2', key: 'ckall',  name: 'CK ALL',        type: 'fixed', h: 12 },
+    { no: '7',   key: 'cklow',  name: 'CK Low',        type: 'derived', from: 'ckall', sub: 'ckw' },
+    { no: '8',   key: 'ck8rst', name: 'CK8-RST',       type: 'fixed', h: 2 },
+    { no: '9',   key: 'rstw',   name: 'RST Width',     type: 'fixed', h: 10 },
+    { no: '10',  key: 'rstlc',  name: 'RST-LC',        type: 'min', h: 10 },
+    { no: '11',  key: 'lcstv',  name: 'LC-STV',        type: 'min', h: 10 },
+    { no: '12',  key: 'lcw',    name: 'LC-W',          type: 'lcw' },
+    { no: '',    key: 'num',    name: 'Num',           type: 'num',
+      groups: [{ l: 'CK1-8', v: 181 }, { l: 'CK9-12', v: 180 }] }
+  ];
+
+  var state = {
+    freq: 288,
+    hsr: true,
+    vtotal: 2250,
+    manual1h: false,
+    oneH: 1.54,
+    mm: false,
+    hEdits: {},              /* H 数手改 */
+    overrides: {},           /* charge: us 手改 */
+    locks: { vtotal: false, ckw: false }
+  };
+
+  var DB = { index: {}, recs: [] };
+  var parseWarn = [];
+  var statusTimer = 0;
+
+  /* ===== 数据解析 ===== */
+  function parseTimingRaw(text) {
+    var recs = [], warn = [], cur = null;
+    var lines = String(text || '').split(/\r?\n/);
+    for (var i = 0; i < lines.length; i++) {
+      var s = lines[i].replace(/\t/g, ' ').trim();
+      if (!s) { continue; }
+      if (s.slice(0, 2) === '//') {
+        var m = s.match(/(\d+(?:\.\d+)?)\s*Hz/i);
+        cur = m ? { freq: parseFloat(m[1]), hsr: /HSR/i.test(s), vtotal: null, charge: null, ck: null } : null;
+        if (cur) { recs.push(cur); } else { warn.push('第' + (i + 1) + '行 标题无频率：' + s); }
+        continue;
+      }
+      var eq = s.indexOf('=');
+      if (eq < 0 || !cur) { warn.push('第' + (i + 1) + '行 无法解析：' + s); continue; }
+      var key = s.slice(0, eq), val = parseFloat(s.slice(eq + 1));
+      if (!isFinite(val)) { warn.push('第' + (i + 1) + '行 数值无效：' + s); continue; }
+      if (/vtotal/i.test(key)) { cur.vtotal = val; }
+      else if (/charge|充电/i.test(key)) { cur.charge = val; }
+      else if (/ck|duty/i.test(key)) { cur.ck = val; }
+      else { warn.push('第' + (i + 1) + '行 未知字段：' + key.trim()); }
+    }
+    return { recs: recs, warn: warn };
+  }
+
+  function buildIndex(recs) {
+    DB.index = {}; DB.recs = recs;
+    for (var i = 0; i < recs.length; i++) {
+      var r = recs[i], k = r.freq + (r.hsr ? ':H' : ':N');
+      if (DB.index[k]) { parseWarn.push('重复条目：' + r.freq + 'Hz' + (r.hsr ? ' HSR' : '')); }
+      DB.index[k] = r;
+    }
+  }
+
+  function lookup(freq, hsr) {
+    if (!isFinite(freq) || !(freq > 0)) { return null; }
+    return DB.index[Math.round(freq * 100) / 100 + (hsr ? ':H' : ':N')] || null;
+  }
+
+  /* ===== 加载 ===== */
+  function loadData() {
+    var raw = window.TIMING_RAW;
+    if (typeof raw === 'string' && raw.trim()) {
+      var p = parseTimingRaw(raw);
+      if (p.recs.length) {
+        parseWarn = p.warn.slice();
+        buildIndex(p.recs);
+        var fs = p.recs.map(function (r) { return r.freq; });
+        setDataHint('数据：' + DATA_FILE + '.js · ' + p.recs.length + ' 条 · '
+          + Math.min.apply(null, fs) + '–' + Math.max.apply(null, fs) + 'Hz'
+          + (p.warn.length ? ' · ⚠ ' + p.warn.length + ' 行被跳过' : ''),
+          p.warn.length > 0);
+        if (p.warn.length && window.console) { console.warn('[Timing] 数据表解析提示：', p.warn); }
+        return;
+      }
+      setDataHint('⚠ ' + DATA_FILE + '.js 未解析出任何频率，已改用内置默认表', true);
+    } else {
+      setDataHint('⚠ 未找到 ' + DATA_FILE + '.js（需与本文件放在同一文件夹），已改用内置默认表', true);
+    }
+    parseWarn = [];
+    buildIndex(FALLBACK);
+  }
+
+  function buildDatalist() {
+    var dl = document.getElementById('freqList');
+    if (!dl) { return; }
+    var map = {}, keys = [];
+    for (var i = 0; i < DB.recs.length; i++) {
+      var r = DB.recs[i], k = String(r.freq);
+      if (!map[k]) { map[k] = { freq: r.freq, modes: [] }; keys.push(k); }
+      var mn = r.hsr ? 'HSR' : '普通';
+      if (map[k].modes.indexOf(mn) < 0) { map[k].modes.push(mn); }
+    }
+    keys.sort(function (a, b) { return parseFloat(a) - parseFloat(b); });
+    dl.innerHTML = keys.map(function (k) {
+      var it = map[k];
+      return '<option value="' + it.freq + '" label="' + it.freq + 'Hz · ' + it.modes.join(' / ') + '"></option>';
+    }).join('');
+  }
+
+  function setDataHint(msg, isErr) {
+    var bar = document.getElementById('dataBar'), n = document.getElementById('dataNote');
+    if (!bar || !n) { return; }
+    n.textContent = msg;
+    bar.className = 'data-bar' + (isErr ? ' err' : '');
+  }
+
+  /* ===== 计算 ===== */
+  function oneH() {
+    if (state.manual1h) { return isFinite(state.oneH) && state.oneH > 0 ? state.oneH : null; }
+    var hz = state.freq, vt = state.vtotal;
+    if (!isFinite(hz) || hz <= 0 || !isFinite(vt) || vt <= 0) { return null; }
+    return 1000000 / (hz * vt);
+  }
+
+  function chargeUs() {
+    var rec = lookup(state.freq, state.hsr);
+    return rec && rec.charge != null ? rec.charge : null;
+  }
+
+  function rowByKey(k) {
+    for (var i = 0; i < ROWS.length; i++) { if (ROWS[i].key === k) { return ROWS[i]; } }
+    return null;
+  }
+
+  function fmtNum(v) {
+    if (v == null || !isFinite(v)) { return '—'; }
+    return String(Math.round(v * 100) / 100);
+  }
+
+  function rowH(row) {
+    if (!row) { return null; }
+    if (row.type === 'auto') { return state.hsr ? HSR_DATA_W : NORMAL_DATA_W; }
+    if (row.type === 'ckw') { return state.hEdits.ckw != null ? state.hEdits.ckw : row.h; }
+    if (row.type === 'derived') {
+      var a = rowH(rowByKey(row.from)), b = rowH(rowByKey(row.sub));
+      if (a == null || b == null) { return null; }
+      return Math.round((a - b) * 100) / 100;
+    }
+    if (row.type === 'fixed' || row.type === 'min') { return row.h; }
+    return null;
+  }
+
+  function rowUs(row) {
+    if (!row) { return null; }
+    if (row.type === 'charge') { return chargeUs(); }
+    if (row.type === 'static') { return null; }
+    if (row.type === 'lcw') { return LC_W_FIXED_S; }
+    var h = rowH(row), o = oneH();
+    if (h == null || o == null) { return null; }
+    return h * o;
+  }
+
+  function fmt2(v, unit) {
+    if (v == null || !isFinite(v)) { return '—'; }
+    return v.toFixed(2) + (unit || '');
+  }
+
+  /* ===== 渲染 ===== */
+  function buildTable() {
+    var colgroup = document.querySelector('#mainTable colgroup');
+    var thead = document.querySelector('#mainTable thead');
+    var tbody = document.querySelector('#mainTable tbody');
+    var isM = window.matchMedia('(max-width: 560px)').matches;
+    var cols = isM
+      ? (state.mm
+          ? '<col style="width:6.5%"><col style="width:26%"><col style="width:23%"><col style="width:26%"><col style="width:9.25%"><col style="width:9.25%">'
+          : '<col style="width:6.5%"><col style="width:31%"><col style="width:25%"><col style="width:37.5%">')
+      : (state.mm
+          ? '<col style="width:7%"><col style="width:27%"><col style="width:22%"><col style="width:23%"><col style="width:10.5%"><col style="width:10.5%">'
+          : '<col style="width:9%"><col style="width:33%"><col style="width:25%"><col style="width:33%">');
+    colgroup.innerHTML = cols;
+    thead.innerHTML = '<tr>' +
+      '<th>No.</th><th>参数</th><th>H 数</th><th>实测 (us)</th>' +
+      (state.mm ? '<th class="th-mm">Min</th><th class="th-mm">Max</th>' : '') + '</tr>';
+    tbody.innerHTML = ROWS.map(function (row) {
+      /* Num：标题整行 + 「标签 | 数值」两行 */
+      if (row.type === 'num') {
+        var span = state.mm ? 6 : 4;
+        return '<tr class="t-num" data-k="num"><td class="num-block" colspan="' + span + '">' +
+            '<div class="numb">' +
+              '<div class="numb-title">' + row.name + '</div>' +
+              row.groups.map(function (g) {
+                return '<div class="numb-row"><span class="numb-l">' + g.l +
+                  '</span><span class="numb-v">' + g.v + '</span></div>';
+              }).join('') +
+            '</div>' +
+          '</td></tr>';
+      }
+      var clsNames = [];
+      if (row.hl) { clsNames.push('hl'); }
+      if (row.type === 'charge') { clsNames.push('t-us'); }
+      if (row.type === 'static') { clsNames.push('t-static'); }
+      if (state.mm) { clsNames.push('mm'); }
+      var cls = clsNames.length ? ' class="' + clsNames.join(' ') + '"' : '';
+      var noText = row.no ? 'No.' + row.no : '';
+      var hCell, usCell;
+      if (row.type === 'ckw') {
+        hCell = '<td class="hcol"><span class="row"><input type="number" step="0.1" min="0" inputmode="decimal" data-ki="ckw" value="'
+          + fmtNum(rowH(row)) + '"><span class="unit">H</span></span></td>';
+        usCell = '<td class="uscol"><span class="lock" data-us="ckw"></span></td>';
+      } else if (row.type === 'charge') {
+        hCell = '<td class="hcol"><span class="lock">—</span></td>';
+        usCell = '<td class="uscol"><span class="lock" data-us="charge"></span><span class="tip" data-tip="charge"></span></td>';
+      } else if (row.type === 'static') {
+        hCell = '<td class="hcol"><span class="lock">' + row.v + '</span></td>';
+        usCell = '<td class="uscol"><span class="lock">—</span></td>';
+      } else {
+        hCell = '<td class="hcol"><span class="lock" data-lk="' + row.key + '"></span></td>';
+        usCell = '<td class="uscol"><span class="lock" data-us="' + row.key + '"></span></td>';
+      }
+      return '<tr data-k="' + row.key + '"' + cls + '>' +
+        '<td class="no">' + noText + '</td>' +
+        '<td class="name">' + row.name + '</td>' +
+        hCell +
+        usCell +
+        (state.mm ? '<td class="tmm" data-mn="' + row.key + '"></td><td class="tmm" data-mx="' + row.key + '"></td>' : '') +
+        '</tr>';
+    }).join('');
+    bindInputs();
+  }
+
+  function bindInputs() {
+    var nodes = document.querySelectorAll('#mainTable input[data-ki]');
+    for (var i = 0; i < nodes.length; i++) { nodes[i].addEventListener('input', onHInput); }
+  }
+
+  /* 整张表只有 CK W 一个可编辑项 */
+  function onHInput(e) {
+    var v = parseFloat(e.target.value);
+    state.hEdits.ckw = isFinite(v) ? v : null;
+    state.locks.ckw = true;
+    updateAll();
+    save();
+  }
+
+  function updateChips() {
+    var vt = document.getElementById('chipVt'), ck = document.getElementById('chipCk');
+    if (vt) {
+      vt.className = 'chip' + (state.locks.vtotal ? ' manual' : '');
+      vt.textContent = state.locks.vtotal ? 'Vtotal · 已手改（点击恢复）' : 'Vtotal · 自动带入';
+    }
+    if (ck) {
+      ck.className = 'chip' + (state.locks.ckw ? ' manual' : '');
+      ck.textContent = state.locks.ckw ? 'CK W · 已手改（点击恢复）' : 'CK W · 自动带入';
+    }
+  }
+
+  function updateAll() {
+    var o = oneH();
+    document.getElementById('oneHRead').textContent = o == null ? '—' : o.toFixed(2);
+
+    var rec = lookup(state.freq, state.hsr);
+
+    for (var i = 0; i < ROWS.length; i++) {
+      var row = ROWS[i];
+      var tr = document.querySelector('#mainTable tr[data-k="' + row.key + '"]');
+      if (!tr) { continue; }
+      var h = rowH(row);
+      var us = rowUs(row);
+      var lk = tr.querySelector('[data-lk="' + row.key + '"]');
+      var usEl = tr.querySelector('[data-us="' + row.key + '"]');
+      if (lk) {
+        if (row.type === 'min') { lk.textContent = '≥' + row.h + 'H'; }
+        else if (row.type === 'lcw') { lk.textContent = Math.round((isFinite(state.freq) ? state.freq : 0) * 100 / 60) + 'frame'; }
+        else { lk.textContent = fmtNum(h) + 'H'; }
+      }
+      if (usEl) {
+        if (row.type === 'lcw') { usEl.textContent = fmt2(us, 's'); }
+        else if (row.type === 'charge') { usEl.textContent = us == null ? '—' : fmtNum(us) + 'us'; }
+        else { usEl.textContent = fmt2(us, 'us'); }
+      }
+      var tipEl = tr.querySelector('[data-tip="charge"]');
+      if (tipEl) {
+        if (!rec) { tipEl.textContent = '未收录'; tipEl.className = 'tip miss'; }
+        else { tipEl.textContent = '表值'; tipEl.className = 'tip'; }
+      }
+      if (state.mm) {
+        var mn = tr.querySelector('[data-mn="' + row.key + '"]');
+        var mx = tr.querySelector('[data-mx="' + row.key + '"]');
+        if (!mn || !mx) { continue; }
+        if (row.type === 'static') {
+          mn.textContent = '—'; mx.textContent = '—';
+        } else if (row.type === 'lcw') {
+          mn.textContent = fmt2(us * MIN_RATIO, 's'); mx.textContent = fmt2(us * MAX_RATIO, 's');
+        } else {
+          mn.textContent = fmt2(us * MIN_RATIO, 'us'); mx.textContent = fmt2(us * MAX_RATIO, 'us');
+        }
+      }
+    }
+
+    var vtEl = document.getElementById('vtotal');
+    if (vtEl) {
+      if (document.activeElement !== vtEl) { vtEl.value = state.vtotal == null ? '' : state.vtotal; }
+      vtEl.className = 'num' + (state.locks.vtotal ? ' is-manual' : '');
+    }
+    var ckwEl = document.querySelector('#mainTable input[data-ki="ckw"]');
+    if (ckwEl) { ckwEl.className = state.locks.ckw ? 'is-manual' : ''; }
+
+    var oneHInput = document.getElementById('oneH');
+    if (state.manual1h) {
+      oneHInput.disabled = false;
+      if (document.activeElement !== oneHInput) { oneHInput.value = state.oneH == null ? '' : state.oneH; }
+    } else {
+      oneHInput.disabled = true;
+      if (o != null) { oneHInput.value = o.toFixed(2); }
+    }
+    updateChips();
+  }
+
+  /* ===== 联动：按频率 + HSR 带入 Vtotal / CK W 默认值 ===== */
+  function applyProfile() {
+    var rec = lookup(state.freq, state.hsr);
+    if (rec) {
+      if (!state.locks.vtotal && rec.vtotal != null) { state.vtotal = rec.vtotal; }
+      if (!state.locks.ckw && rec.ck != null) { state.hEdits.ckw = rec.ck; }
+    }
+    buildTable();
+    updateAll();
+  }
+
+  /* ===== 顶部控件 ===== */
+  function bindTop() {
+    document.getElementById('freq').addEventListener('input', function (e) {
+      var v = parseFloat(e.target.value);
+      state.freq = isFinite(v) && v > 0 ? v : null;
+      applyProfile();
+      save();
+    });
+    document.getElementById('hsr').addEventListener('change', function (e) {
+      state.hsr = e.target.checked;
+      applyProfile();
+      save();
+    });
+    document.getElementById('vtotal').addEventListener('input', function (e) {
+      var v = parseFloat(e.target.value);
+      state.vtotal = isFinite(v) && v > 0 ? v : null;
+      state.locks.vtotal = true;
+      updateAll();
+      save();
+    });
+    document.getElementById('manual1h').addEventListener('change', function (e) {
+      state.manual1h = e.target.checked;
+      if (state.manual1h) {
+        var cur = parseFloat(document.getElementById('oneH').value);
+        if (isFinite(cur) && cur > 0) { state.oneH = cur; }
+      }
+      updateAll();
+      save();
+    });
+    document.getElementById('oneH').addEventListener('input', function (e) {
+      var v = parseFloat(e.target.value);
+      state.oneH = isFinite(v) && v > 0 ? v : null;
+      updateAll();
+      save();
+    });
+    document.getElementById('mmShow').addEventListener('change', function (e) {
+      state.mm = e.target.checked;
+      buildTable();
+      updateAll();
+      save();
+    });
+    document.getElementById('chipVt').addEventListener('click', function () {
+      if (!state.locks.vtotal) { return; }
+      state.locks.vtotal = false;
+      applyProfile();
+      save();
+      showStatus('Vtotal 已恢复自动', false);
+    });
+    document.getElementById('chipCk').addEventListener('click', function () {
+      if (!state.locks.ckw) { return; }
+      state.locks.ckw = false;
+      applyProfile();
+      save();
+      showStatus('CK W 已恢复自动', false);
+    });
+    document.getElementById('resetBtn').addEventListener('click', function () {
+      state = {
+        freq: 288, hsr: true, vtotal: 2250, manual1h: false, oneH: 1.54, mm: false,
+        hEdits: {}, overrides: {}, locks: { vtotal: false, ckw: false }
+      };
+      syncToggles();
+      applyProfile();
+      save();
+      showStatus('已重置', false);
+    });
+  }
+
+  function syncToggles() {
+    document.getElementById('freq').value = state.freq == null ? '' : state.freq;
+    document.getElementById('hsr').checked = state.hsr;
+    document.getElementById('vtotal').value = state.vtotal == null ? '' : state.vtotal;
+    document.getElementById('manual1h').checked = state.manual1h;
+    document.getElementById('oneH').value = state.oneH == null ? '' : state.oneH;
+    document.getElementById('mmShow').checked = state.mm;
+  }
+
+  /* ===== localStorage ===== */
+  function save() {
+    try {
+      var data = {
+        freq: state.freq, hsr: state.hsr, vtotal: state.vtotal,
+        manual1h: state.manual1h, oneH: state.oneH, mm: state.mm,
+        hEdits: state.hEdits, overrides: state.overrides, locks: state.locks
+      };
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      showStatus('已保存', false);
+    } catch (err) {
+      showStatus('无法自动保存', true);
+    }
+  }
+
+  function loadState() {
+    try {
+      var raw = window.localStorage.getItem(STORAGE_KEY);
+      if (!raw) { return; }
+      var data = JSON.parse(raw);
+      if (!data || typeof data !== 'object') { return; }
+      if (isFinite(data.freq) && data.freq > 0) { state.freq = data.freq; }
+      if (typeof data.hsr === 'boolean') { state.hsr = data.hsr; }
+      if (isFinite(data.vtotal) && data.vtotal > 0) { state.vtotal = data.vtotal; }
+      if (typeof data.manual1h === 'boolean') { state.manual1h = data.manual1h; }
+      if (isFinite(data.oneH) && data.oneH > 0) { state.oneH = data.oneH; }
+      if (typeof data.mm === 'boolean') { state.mm = data.mm; }
+      if (data.hEdits && typeof data.hEdits === 'object') { state.hEdits = data.hEdits; }
+      if (data.overrides && typeof data.overrides === 'object') { state.overrides = data.overrides; }
+      if (data.locks && typeof data.locks === 'object') {
+        state.locks.vtotal = !!data.locks.vtotal;
+        state.locks.ckw = !!data.locks.ckw;
+      }
+    } catch (err) {
+      showStatus('无法读取本地记录', true);
+    }
+  }
+
+  function showStatus(message, isError) {
+    var el = document.getElementById('saveState');
+    if (!el) { return; }
+    el.textContent = message;
+    window.clearTimeout(statusTimer);
+    if (!isError) {
+      statusTimer = window.setTimeout(function () { el.textContent = '自动保存'; }, 1200);
+    }
+  }
+
+  function init() {
+    if (!document.getElementById('freq')) { return; }
+    loadData();
+    buildDatalist();
+    loadState();
+    syncToggles();
+    bindTop();
+    applyProfile();
+    window.addEventListener('pagehide', function () { save(); });
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'hidden') { save(); }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
