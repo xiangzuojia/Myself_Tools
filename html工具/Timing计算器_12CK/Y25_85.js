@@ -9,87 +9,87 @@
    ============================================================ */
 window.TIMING_RAW = `
 //60Hz
-Vtotal					=2250
+Vtotal				   	=2250
 充电时间(charge time)		=4us
-CK Duty(正脉宽)			=5H
+CK Duty(正脉宽)		   	=5H
 
 //120Hz
-Vtotal					=2250
+Vtotal			   		=2250
 充电时间(charge time)		=2us
-CK Duty(正脉宽)			=5.5H
+CK Duty(正脉宽)		   	=5.5H
 
 //HSR 120Hz
-Vtotal					=2250
+Vtotal				   	=2250
 充电时间(charge time)		=3us
-CK Duty(正脉宽)			=5.5H
+CK Duty(正脉宽)		   	=5.5H
 
 //132Hz
-Vtotal					=2250
+Vtotal				   	=2250
 充电时间(charge time)		=1.9us
-CK Duty(正脉宽)			=5.5H
+CK Duty(正脉宽)		   	=5.5H
 
 //144Hz
-Vtotal					=2250
+Vtotal				   	=2250
 充电时间(charge time)		=1.8us
-CK Duty(正脉宽)			=5.5H
+CK Duty(正脉宽)		   	=5.5H
 
 //HSR 144Hz
-Vtotal					=1125
+Vtotal				   	=1125
 充电时间(charge time)		=2.3us
-CK Duty(正脉宽)			=5.5H
+CK Duty(正脉宽)		   	=5.5H
 
 //150Hz
-Vtotal					=2250
+Vtotal				   	=2250
 充电时间(charge time)		=1.3us
-CK Duty(正脉宽)			=5.5H
+CK Duty(正脉宽)		   	=5.5H
 
 //165Hz
-Vtotal					=2250
+Vtotal				   	=2250
 充电时间(charge time)		=1.0us
-CK Duty(正脉宽)			=5.5H
+CK Duty(正脉宽)			   =5.5H
 
 //HSR 165Hz
-Vtotal					=2250
+Vtotal			   		=2250
 充电时间(charge time)		=2.1us
-CK Duty(正脉宽)			=5.5H
+CK Duty(正脉宽)		   	=5.5H
 
 //170Hz
-Vtotal					=2250
+Vtotal				   	=2250
 充电时间(charge time)		=1.0us
-CK Duty(正脉宽)			=5.5H
+CK Duty(正脉宽)		   	=5.5H
 
 //180Hz
-Vtotal					=2216
+Vtotal				   	=2216
 充电时间(charge time)		=1.0us
-CK Duty(正脉宽)			=5.5H
+CK Duty(正脉宽)		   	=5.5H
 
 //HSR 240Hz
-Vtotal					=2250
+Vtotal				   	=2250
 充电时间(charge time)		=1.8us
-CK Duty(正脉宽)			=5.8H
+CK Duty(正脉宽)			   =5.8H
 
 //HSR 265Hz
-Vtotal					=2250
+Vtotal				   	=2250
 充电时间(charge time)		=1.5us
-CK Duty(正脉宽)			=5.8H
+CK Duty(正脉宽)		   	=5.8H
 
 //HSR 288Hz
-Vtotal					=2250
+Vtotal			   		=2250
 充电时间(charge time)		=1.3us
-CK Duty(正脉宽)			=5.8H
+CK Duty(正脉宽)		   	=5.8H
 
 //HSR 300Hz
-Vtotal					=2250
+Vtotal				   	=2250
 充电时间(charge time)		=1.0us
-CK Duty(正脉宽)			=5.8H
+CK Duty(正脉宽)			   =5.8H
 
 //HSR 330Hz
-Vtotal					=2250
+Vtotal				   	=2250
 充电时间(charge time)		=0.8us
-CK Duty(正脉宽)			=5.8H
+CK Duty(正脉宽)		   	=5.8H
 
 //HSR 360Hz
-Vtotal					=2216
+Vtotal			   		=2216
 充电时间(charge time)		=0.8us
-CK Duty(正脉宽)			=5.8H
+CK Duty(正脉宽)		   	=5.8H
 `;
