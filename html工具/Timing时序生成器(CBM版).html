@@ -67,6 +67,13 @@
         .btn-clear:hover { background: #fff1f2; }
         .save-status { font-size: 11px; color: #28a745; font-weight: normal; min-width: 56px;}
 
+        /* 配置文件导入 / 导出 */
+        .io-bar { display: flex; gap: 6px; align-items: center; margin-bottom: 10px; }
+        .io-bar button { flex: 0 0 auto; background: #fff; border: 1px solid #007bff; color: #007bff; border-radius: 4px;
+                         padding: 6px 10px; font-size: 12px; font-weight: bold; cursor: pointer; }
+        .io-bar button:hover { background: #f0f7ff; }
+        .io-hint { font-size: 10px; color: #99a2ad; margin-left: auto; }
+
         /* === 第二步：注释配置 === */
         .anno-card { background: #fff; border: 1px solid #dbeafe; border-left: 4px solid #2563eb; border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
         .anno-card .card-header { background: #eff6ff; border-bottom-color: #dbeafe; }
@@ -153,6 +160,13 @@
                 <label>总周期数: <input type="number" id="totalCycles" value="92" min="5" oninput="onGlobalChange()"></label>
                 <button class="btn-reset" onclick="resetDefaults()">恢复默认设置</button>
                 <span class="save-status" id="saveStatus"></span>
+            </div>
+
+            <div class="io-bar">
+                <button onclick="exportConfig()">导出配置文件</button>
+                <button onclick="pickConfigFile()">导入配置文件</button>
+                <span class="io-hint">JSON · 含信号与注释</span>
+                <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="onImportFile(this)">
             </div>
 
             <!-- 信号卡片容器 -->
@@ -348,21 +362,46 @@
         saveTimer = setTimeout(() => { el.textContent = ''; }, 1600);
     }
 
+    // 统一的配置载荷：自动保存与「导出配置文件」共用同一结构
+    function buildConfigPayload() {
+        return {
+            app: 'Timing时序生成器',
+            v: 11,
+            signals: signalsData,
+            annotations: annotations,
+            step: currentStep,
+            totalCycles: document.getElementById('totalCycles').value,
+            resX: document.getElementById('resX').value,
+            resY: document.getElementById('resY').value
+        };
+    }
+
     function persist() {
         try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify({
-                v: 10,
-                signals: signalsData,
-                annotations: annotations,
-                step: currentStep,
-                totalCycles: document.getElementById('totalCycles').value,
-                resX: document.getElementById('resX').value,
-                resY: document.getElementById('resY').value
-            }));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(buildConfigPayload()));
             flashSaved();
         } catch (e) {
             // 隐私模式或 file:// 限制下 localStorage 不可用时，静默降级为不保存
         }
+    }
+
+    // 把一份配置对象应用到界面（自动保存与导入共用）
+    function applyConfig(cfg) {
+        signalsData = (Array.isArray(cfg.signals) ? cfg.signals : []).map(normalizeSignal);
+        annotations = Array.isArray(cfg.annotations) && cfg.annotations.length
+            ? cfg.annotations.map(normalizeAnnotation)
+            : createDefaultAnnotations();
+        const savedStep = parseInt(cfg.step, 10);
+        currentStep = savedStep === 2 ? 2 : 1;
+
+        const cycles = parseInt(cfg.totalCycles, 10);
+        if (Number.isFinite(cycles)) document.getElementById('totalCycles').value = Math.max(5, cycles);
+        const rx = parseInt(cfg.resX, 10);
+        if (Number.isFinite(rx)) document.getElementById('resX').value = clamp(rx, 800, 8000);
+        const ry = parseInt(cfg.resY, 10);
+        if (Number.isFinite(ry)) document.getElementById('resY').value = clamp(ry, 600, 8000);
+
+        applyStepUI();   // 内部会重绘控制面板、注释面板与画布
     }
 
     function loadConfig() {
@@ -378,19 +417,7 @@
                 flashSaved('当前参数已设为默认');
             }
 
-            signalsData = cfg.signals.map(normalizeSignal);
-            annotations = Array.isArray(cfg.annotations) && cfg.annotations.length
-                ? cfg.annotations.map(normalizeAnnotation)
-                : createDefaultAnnotations();
-            const savedStep = parseInt(cfg.step, 10);
-            currentStep = savedStep === 2 ? 2 : 1;
-
-            const cycles = parseInt(cfg.totalCycles, 10);
-            if (Number.isFinite(cycles)) document.getElementById('totalCycles').value = Math.max(5, cycles);
-            const rx = parseInt(cfg.resX, 10);
-            if (Number.isFinite(rx)) document.getElementById('resX').value = clamp(rx, 800, 8000);
-            const ry = parseInt(cfg.resY, 10);
-            if (Number.isFinite(ry)) document.getElementById('resY').value = clamp(ry, 600, 8000);
+            applyConfig(cfg);
         } catch (e) {
             // 配置损坏时保留默认设置，不影响使用
         }
@@ -1421,6 +1448,75 @@
 
         ctx.lineTo(endX, baseY);
         ctx.stroke();
+    }
+
+    // === 配置文件导入 / 导出 ===
+    function configStamp() {
+        const d = new Date();
+        const p = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`;
+    }
+
+    function exportConfig() {
+        try {
+            const data = JSON.stringify(buildConfigPayload(), null, 2);
+            const blob = new Blob([data], { type: 'application/json;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Timing配置_${configStamp()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
+            flashSaved(`已导出 ${signalsData.length} 条信号`);
+        } catch (e) {
+            alert('导出失败：' + (e && e.message ? e.message : '未知错误'));
+        }
+    }
+
+    function pickConfigFile() {
+        const input = document.getElementById('importFile');
+        if (!input) return;
+        input.value = '';   // 清空后再次选择同一文件也能触发 change
+        input.click();
+    }
+
+    function onImportFile(input) {
+        const file = input.files && input.files[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            alert('配置文件超过 5MB，已终止导入，请确认文件是否正确。');
+            input.value = '';
+            return;
+        }
+        if (!confirm('导入将覆盖当前的信号与注释配置，是否继续？')) {
+            input.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            try {
+                let cfg;
+                try {
+                    cfg = JSON.parse(String(reader.result));
+                } catch (err) {
+                    throw new Error('文件不是有效的 JSON，请确认是由本工具「导出配置文件」生成的');
+                }
+                if (!cfg || typeof cfg !== 'object' || !Array.isArray(cfg.signals)) {
+                    throw new Error('文件结构不符合预期（缺少 signals 数组）');
+                }
+                if (!cfg.signals.length) throw new Error('配置文件里没有任何信号');
+                applyConfig(cfg);
+                persist();
+                flashSaved(`已导入 ${signalsData.length} 条信号`);
+            } catch (e) {
+                alert('导入失败：' + (e && e.message ? e.message : '不是有效的配置 JSON'));
+            }
+        };
+        reader.onerror = () => alert('读取文件失败，请重试。');
+        reader.readAsText(file, 'utf-8');
     }
 
     // === 图片下载 ===
