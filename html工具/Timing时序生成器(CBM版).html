@@ -222,6 +222,11 @@
 </div>
 
 <script>
+    // 时钟周期V2：单周期内脉冲数量上限。
+    // 必须在本文件最前面初始化：signalsData 的顶层初始化早于后段的配置持久化代码，
+    // 若声明在后面，有存档的用户会触发 TDZ（Cannot access 'MAX_PULSES' before initialization）。
+    const MAX_PULSES = 12;
+
     const canvas = document.getElementById('timingCanvas');
     const ctx = canvas.getContext('2d');
 
@@ -299,7 +304,6 @@
 
     // === 配置持久化 ===
     // 周期内脉冲列表（时钟周期 V2）：offset 相对「1 周期」起点，单位与周期一致
-    const MAX_PULSES = 12;
     function normalizePulses(list) {
         const arr = Array.isArray(list) ? list : [];
         const out = arr
